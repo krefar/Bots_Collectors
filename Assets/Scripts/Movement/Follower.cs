@@ -1,9 +1,4 @@
-using Assets.Scripts.Extensions;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
-using static UnityEngine.GraphicsBuffer;
 
 public class Follower : MovementBase
 {

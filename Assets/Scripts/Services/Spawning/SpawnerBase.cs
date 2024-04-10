@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
@@ -13,17 +14,23 @@ public abstract class SpawnerBase<T> : MonoBehaviour
     [SerializeField] private Transform _spawnPointsContainer;
 
     private ObjectPool<T> _pool;
-    private List<Transform> _spawnPoints;
+    protected List<SpawnPoint> SpawnPoints { get; private set; }
+    protected Queue<SpawnPoint> DisabledPoints { get; private set; }
 
     protected virtual void Awake()
     {
-        _spawnPoints = new List<Transform>();
+        SpawnPoints = new List<SpawnPoint>();
+        DisabledPoints = new Queue<SpawnPoint>();
 
         foreach (Transform child in _spawnPointsContainer)
         {
             if (child.gameObject.activeInHierarchy)
             {
-                _spawnPoints.Add(child);
+                SpawnPoints.Add(new SpawnPoint(child));
+            }
+            else
+            {
+                DisabledPoints.Enqueue(new SpawnPoint(child));
             }
         }
 
@@ -48,9 +55,24 @@ public abstract class SpawnerBase<T> : MonoBehaviour
         _pool.Release(obj);
     }
 
-    protected abstract Transform GetSpawnPoint();
+    protected abstract SpawnPoint GetSpawnPoint();
     protected virtual void ProcessGettingObject(T newObject, Vector3 spawnPosition)
     {
+    }
+
+    protected bool AddSpawnPointFromDisabled()
+    {
+        if (DisabledPoints.Any())
+        {
+            var newSpawnPoint = DisabledPoints.Dequeue();
+            newSpawnPoint.Transform.gameObject.SetActive(true);
+
+            SpawnPoints.Add(newSpawnPoint);
+
+            return true;
+        }
+
+        return false;
     }
 
     private void DestroyObject(T obj)
@@ -60,19 +82,15 @@ public abstract class SpawnerBase<T> : MonoBehaviour
         Destroy(gameObject);
     }
 
-    protected ReadOnlyCollection<Transform> GetSpawnPoints()
-    {
-        return _spawnPoints.AsReadOnly();
-    }
-
     private void GetObject(T obj)
     {
         var gameObject = obj.GameObject();
         var spawnPoint = GetSpawnPoint();
+        spawnPoint.Free = false;
 
-        this.ProcessGettingObject(obj, spawnPoint.position);
+        this.ProcessGettingObject(obj, spawnPoint.Transform.position);
 
-        gameObject.transform.position = spawnPoint.position;
+        gameObject.transform.position = spawnPoint.Transform.position;
         gameObject.SetActive(true);
     }
 
@@ -92,9 +110,12 @@ public abstract class SpawnerBase<T> : MonoBehaviour
     {
         var wait = new WaitForSeconds(1);
 
-        while (_pool.CountAll < _spawnPoints.Count)
+        while (enabled)
         {
-            _pool.Get();
+            if (_pool.CountActive < SpawnPoints.Count)
+            {
+                _pool.Get();
+            }
 
             yield return wait;
         }

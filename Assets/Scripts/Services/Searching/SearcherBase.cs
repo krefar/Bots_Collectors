@@ -8,6 +8,7 @@ public abstract class SearcherBase<T> : MonoBehaviour
     [SerializeField] private float _searchRadius;
     [SerializeField] private float _searchDelay;
     [SerializeField] private ParticleSystem _scanEffect;
+    [SerializeField] private Vector3 _scanEffectPointOffset;
 
     public event Action<T> ItemFound;
 
@@ -35,14 +36,14 @@ public abstract class SearcherBase<T> : MonoBehaviour
 
     private void InstantiateScanEffect()
     {
-        var hitVFX = Instantiate(_scanEffect, transform.position, Quaternion.Euler(0, 0, 0));
+        var hitVFX = Instantiate(_scanEffect, transform.position + _scanEffectPointOffset, transform.rotation);
 
         Destroy(hitVFX.gameObject, hitVFX.main.duration);
     }
 
     private void SearchAround()
     {
-        var results = new Collider[10];
+        var results = new Collider[50];
         var colliders = Physics.OverlapSphereNonAlloc(transform.position, _searchRadius, results);
 
         foreach (var collider in results)

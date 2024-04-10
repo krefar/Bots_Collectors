@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,26 @@ public class WorkerSpawner : QueueSpawner<Worker>
         StartCoroutine(SendIdleWorkerForCrystalInternal(crystal));
     }
 
+    public void SendIdleWorkerForHostBuild(Vector3 point, Action callback = null)
+    {
+        StartCoroutine(SendIdleWorkerForHostBuildInternal(point, callback));
+    }
+
+    public void SpawnNewWorker()
+    {
+        var result = AddSpawnPointFromDisabled();
+    }
+
+    protected override void ProcessGettingObject(Worker newObject, Vector3 spawnPosition)
+    {
+        _workers.Add(newObject);
+
+        base.ProcessGettingObject(newObject, spawnPosition);
+
+        var collector = newObject.GetComponent<Collector>();
+        collector.Init(spawnPosition);
+    }
+
     private IEnumerator SendIdleWorkerForCrystalInternal(Crystal crystal)
     {
         var wait = new WaitForSeconds(1);
@@ -30,20 +51,28 @@ public class WorkerSpawner : QueueSpawner<Worker>
             if (idleWorker != null)
             {
                 idleWorker.GoForCrystal(crystal);
-                break;
+                yield break;
             }
 
             yield return wait;
         }
     }
 
-    protected override void ProcessGettingObject(Worker newObject, Vector3 spawnPosition)
+    private IEnumerator SendIdleWorkerForHostBuildInternal(Vector3 point, Action callback = null)
     {
-        _workers.Add(newObject);
+        var wait = new WaitForSeconds(1);
 
-        base.ProcessGettingObject(newObject, spawnPosition);
+        while (enabled)
+        {
+            var idleWorker = _workers.FirstOrDefault(w => w.Idle);
 
-        var collector = newObject.GetComponent<Collector>();
-        collector.Init(spawnPosition);
+            if (idleWorker != null)
+            {
+                idleWorker.GoForHostBuild(point, callback);
+                yield break;
+            }
+
+            yield return wait;
+        }
     }
 }

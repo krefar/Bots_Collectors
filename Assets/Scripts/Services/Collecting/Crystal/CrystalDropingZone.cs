@@ -1,3 +1,3 @@
-public  class CrystalDropingZone : DropingZone<Crystal>
+public class CrystalDropingZone : DropingZone<Crystal>
 {
 }

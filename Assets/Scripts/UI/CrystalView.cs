@@ -19,6 +19,6 @@ public class CrystalView : MonoBehaviour
 
     private void Render()
     {
-        _crystalText.text = $"{_crystalCounter.Title}: {_crystalCounter.Amount}";
+        _crystalText.text = $"{_crystalCounter.Amount}";
     }
 }

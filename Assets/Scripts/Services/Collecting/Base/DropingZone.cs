@@ -10,5 +10,6 @@ public abstract class DropingZone<T> : MonoBehaviour
     public void ProcessDrop(T item)
     {
         OnDrop?.Invoke(item);
+
     }
 }

@@ -5,27 +5,19 @@ using UnityEngine;
 public class RandomSpawner<T> : SpawnerBase<T>
     where T : Object, new()
 {
-    private List<Transform> _baseSpawnPoints;
-
-    private new void Awake()
+    protected override SpawnPoint GetSpawnPoint()
     {
-        base.Awake();
+        var freeSpawnPoint = SpawnPoints.Where(p => p.Free).ToList();
+        var freeSpawnPointCount = freeSpawnPoint.Count;
 
-        _baseSpawnPoints = GetSpawnPoints().ToList();
-    }
-
-    protected override Transform GetSpawnPoint()
-    {
-        if (_baseSpawnPoints.Count == 0)
+        if (freeSpawnPointCount > 0)
         {
-            _baseSpawnPoints = GetSpawnPoints().ToList();
+            var randomIndex = Random.Range(0, freeSpawnPointCount);
+            var randomPoint = freeSpawnPoint[randomIndex];
+
+            return randomPoint;
         }
 
-        var randomIndex = Random.Range(0, _baseSpawnPoints.Count);
-        var randomPoint = _baseSpawnPoints[randomIndex];
-
-        _baseSpawnPoints.RemoveAt(randomIndex);
-
-        return randomPoint;
+        return null;
     }
 }
