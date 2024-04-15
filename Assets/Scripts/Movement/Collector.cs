@@ -12,7 +12,7 @@ public class Collector : MovementBase
     private Vector3 _nextPoint;
     private Vector3 _targetPosition;
 
-    private bool _returned;
+    private bool _isReturned;
 
     public event Action StartPointReached;
 
@@ -27,9 +27,9 @@ public class Collector : MovementBase
     {
         if (transform.position.SamePosition(_startPoint, Axis.X | Axis.Z) && _points.Count == 0)
         {
-            if (!_returned)
+            if (!_isReturned)
             {
-                _returned = true;
+                _isReturned = true;
                 StartPointReached?.Invoke();
             }
 
@@ -43,11 +43,6 @@ public class Collector : MovementBase
     {
         _points.Enqueue(wayPoint);
         _nextPoint = wayPoint;
-    }
-
-    public void Reset()
-    {
-        _points.Clear();
     }
 
     protected override void PrepareMoveData()
@@ -69,7 +64,7 @@ public class Collector : MovementBase
             _targetPosition = _nextPoint;
         }
 
-        _returned = false;
+        _isReturned = false;
     }
 
     protected override Vector3 GetNexPosition()

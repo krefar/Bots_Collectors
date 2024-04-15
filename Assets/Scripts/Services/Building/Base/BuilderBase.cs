@@ -10,39 +10,45 @@ public abstract class BuilderBase<T> : MonoBehaviour
     private ToPointMover _toPointMover;
     private Vector3 _point;
 
-    bool _processBuild;
+    bool _isBuildPointReached;
 
     public void Init(ToPointMover toPointMover)
     {
         _toPointMover = toPointMover;
     }
 
-    public void Build(Vector3 point, Action callback = null)
+    public void GoToBuild(Vector3 point, Action callback = null)
     {
         _point = point;
         _toPointMover.Init(_point);
-        _toPointMover.PointReached += SetBuildProcess;
+        _toPointMover.PointReached += SetBuildPointReached;
 
         StartCoroutine(MoveAndBuild(callback));
     }
 
-    private void SetBuildProcess()
+    private void SetBuildPointReached()
     {
-        _processBuild = true;
+        _isBuildPointReached = true;
     }
 
     private IEnumerator MoveAndBuild(Action callback = null)
     {
-        yield return new WaitUntil(() => _processBuild);
+        yield return new WaitUntil(() => _isBuildPointReached);
 
-        _toPointMover.PointReached -= SetBuildProcess;
-        _processBuild = false;
+        _toPointMover.PointReached -= SetBuildPointReached;
+        _isBuildPointReached = false;
 
-        Instantiate(_prefab, transform.position, new Quaternion());
+        var building = Instantiate(_prefab, transform.position, new Quaternion());
+
+        UpdateBuildingProps(building);
 
         if (callback != null)
         {
             callback();
         }
+    }
+
+    protected virtual void UpdateBuildingProps(T building)
+    {
     }
 }

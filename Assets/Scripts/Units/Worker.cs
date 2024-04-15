@@ -4,20 +4,21 @@ using UnityEngine;
 [RequireComponent (typeof(Collector))]
 [RequireComponent(typeof(ToPointMover))]
 [RequireComponent (typeof(WorkersHostBuilder))]
-public class Worker : MonoBehaviour
+public class Worker : MonoBehaviour, IEquatable<Worker>
+
 {
 
     private Collector _collector;
     private ToPointMover _toPointMover;
     private WorkersHostBuilder _workersHostBuilder;
 
-    private bool _idle;
+    private bool _isIdle;
 
-    public bool Idle => _idle;
+    public bool IsIdle => _isIdle;
 
     private void Awake()
     {
-        _idle = true;
+        _isIdle = true;
         _collector = GetComponent<Collector>();
         _toPointMover = GetComponent<ToPointMover>();
         _toPointMover.enabled = false;
@@ -28,9 +29,9 @@ public class Worker : MonoBehaviour
 
     public void GoForCrystal(Crystal crystal)
     {
-        if (_idle)
+        if (_isIdle)
         {
-            _idle = false;
+            _isIdle = false;
             _collector.AddPoint(crystal.transform.position);
             _collector.StartPointReached += SetIdle;
         }
@@ -38,20 +39,25 @@ public class Worker : MonoBehaviour
 
     public void GoForHostBuild(Vector3 point, Action callback = null)
     {
-        if (_idle)
+        if (_isIdle)
         {
-            _idle = false;
+            _isIdle = false;
             _collector.enabled = false;
             _toPointMover.enabled = true;
             _toPointMover.PointReached += SetIdle;
 
-            _workersHostBuilder.Build(point, callback);
+            _workersHostBuilder.GoToBuild(point, callback);
         }
+    }
+
+    public bool Equals(Worker other)
+    {
+        return this.GetInstanceID() == other.GetInstanceID();
     }
 
     private void SetIdle()
     {
-        _idle = true;
+        _isIdle = true;
         _collector.enabled = true;
         _toPointMover.enabled = false;
         _collector.StartPointReached -= SetIdle;

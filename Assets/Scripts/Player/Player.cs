@@ -3,16 +3,16 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(SelectManager))]
+[RequireComponent(typeof(Selector))]
 public class Player : MonoBehaviour
 {
     private PlayerInput _playerInput;
-    private SelectManager _selectManager;
+    private Selector _selectManager;
 
     private void Awake()
     {
         _playerInput = new PlayerInput();
-        _selectManager = GetComponent<SelectManager>();
+        _selectManager = GetComponent<Selector>();
 
         _playerInput.Player.MouseClick.performed += MouseClick;
     }

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
-public class Crystal : MonoBehaviour, IValueable
+public class Crystal : MonoBehaviour, IValuable
 {
     [SerializeField] private int _amount;
 

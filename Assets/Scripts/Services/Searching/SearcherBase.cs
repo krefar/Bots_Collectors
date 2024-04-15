@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Linq;
 using UnityEngine;
 
 public abstract class SearcherBase<T> : MonoBehaviour
@@ -44,7 +43,8 @@ public abstract class SearcherBase<T> : MonoBehaviour
     private void SearchAround()
     {
         var results = new Collider[50];
-        var colliders = Physics.OverlapSphereNonAlloc(transform.position, _searchRadius, results);
+        var onlyCrystalsLayerMask = 1535;
+        var colliders = Physics.OverlapSphereNonAlloc(transform.position, _searchRadius, results, onlyCrystalsLayerMask);
 
         foreach (var collider in results)
         {

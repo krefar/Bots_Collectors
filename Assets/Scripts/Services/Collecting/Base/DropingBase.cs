@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-public abstract class DropingBase<TItem,TZone> : MonoBehaviour
+public abstract class DropingBase<TItem, TZone> : MonoBehaviour
     where TItem : Object, new()
     where TZone : DropingZone<TItem>, new()
 {
@@ -19,9 +19,6 @@ public abstract class DropingBase<TItem,TZone> : MonoBehaviour
         }
     }
 
-    protected abstract bool CanDrop(TItem item);
-    protected abstract void DropProcess(TItem item);
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.TryGetComponent(out TZone zoneToDrop))
@@ -36,4 +33,7 @@ public abstract class DropingBase<TItem,TZone> : MonoBehaviour
             }
         }
     }
+
+    protected abstract bool CanDrop(TItem item);
+    protected abstract void DropProcess(TItem item);
 }

@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
-[RequireComponent(typeof(CrystalSearcher))]
-[RequireComponent(typeof(CrystalCounter))]
-[RequireComponent(typeof(WorkerSpawner))]
+[RequireComponent(typeof(CrystalSearcher), typeof(CrystalCounter))]
+[RequireComponent(typeof(WorkerSpawner), typeof(WorkerCommander))]
 [RequireComponent(typeof(FlagPlacer))]
-
 public class WorkersHost : MonoBehaviour
 {
     const int WorkerCost = 30;
@@ -17,9 +13,11 @@ public class WorkersHost : MonoBehaviour
     private CrystalSearcher _crystalSearcher;
     private CrystalCounter _crystalCounter;
     private WorkerSpawner _workerSpawner;
+    private WorkerCommander _workerCommander;
     private FlagPlacer _flagPlacer;
 
     private static Queue<Crystal> _crystalsQueue;
+
     private List<int> _crystalsProcessed;
     private WorkersHostMode _mode;
     
@@ -27,8 +25,10 @@ public class WorkersHost : MonoBehaviour
     {
         _mode = WorkersHostMode.SpawnWorkers;
         _crystalsProcessed = new List<int>();
+
         _crystalSearcher = GetComponent<CrystalSearcher>();
         _workerSpawner = GetComponent<WorkerSpawner>();
+        _workerCommander = GetComponent<WorkerCommander>();
         _crystalCounter = GetComponent<CrystalCounter>();
         _flagPlacer = GetComponent<FlagPlacer>();
 
@@ -41,6 +41,11 @@ public class WorkersHost : MonoBehaviour
     private void Start()
     {
         StartCoroutine(ProcessCrystalQueue());
+
+        if (_crystalCounter.Amount > 0)
+        {
+            UseAmount();
+        }
     }
 
     private void OnEnable()
@@ -64,6 +69,18 @@ public class WorkersHost : MonoBehaviour
         _flagPlacer.Place(point, transform.rotation);
     }
 
+    public void BindWorker(Worker worker)
+    {
+        _workerSpawner.BindWorker(worker);
+        _workerCommander.AddWorker(worker);
+    }
+    
+    public void UnbindWorker(Worker worker)
+    {
+        _workerSpawner.UnbindWorker(worker);
+        _workerCommander.RemoveWorker(worker);
+    }
+
     private IEnumerator ProcessCrystalQueue()
     {
         var wait = new WaitForSeconds(1);
@@ -72,8 +89,11 @@ public class WorkersHost : MonoBehaviour
 
             if (_crystalsQueue.Count > 0)
             {
-                var crystal = _crystalsQueue.Dequeue();
-                _workerSpawner.SendIdleWorkerForCrystal(crystal);
+                if (_workerCommander.HasWorkers)
+                {
+                    var crystal = _crystalsQueue.Dequeue();
+                    _workerCommander.SendIdleWorkerForCrystal(crystal);
+                }
             }
 
             yield return wait;
@@ -84,7 +104,7 @@ public class WorkersHost : MonoBehaviour
     {
         var crystalHash = crystal.GetHashCode();
 
-        if (!_crystalsProcessed.Contains(crystalHash))
+        if (_crystalsProcessed.Contains(crystalHash) == false)
         {
             _crystalsQueue.Enqueue(crystal);
             _crystalsProcessed.Add(crystalHash);
@@ -99,17 +119,21 @@ public class WorkersHost : MonoBehaviour
         {
             if (currentAmount >= WorkerCost)
             {
-                _workerSpawner.SpawnNewWorker();
-                _crystalCounter.DecreaseAmount(WorkerCost);
+                var newWorker = _workerSpawner.SpawnNewWorker();
+                if (newWorker != null)
+                {
+                    _workerCommander.AddWorker(newWorker);
+                    _crystalCounter.DecreaseAmount(WorkerCost);
+                }
             }
         }
         else if(_mode == WorkersHostMode.BuildNewHost)
         {
             if (_flagPlacer.CurrentPosition.HasValue && currentAmount >= HostCost)
             {
-                _crystalCounter.DecreaseAmount(HostCost);
-                _workerSpawner.SendIdleWorkerForHostBuild(_flagPlacer.CurrentPosition.Value, BuildCallback);
                 _mode = WorkersHostMode.SpawnWorkers;
+                _crystalCounter.DecreaseAmount(HostCost);
+                _workerCommander.SendIdleWorkerForHostBuild(_flagPlacer.CurrentPosition.Value, UnbindWorker, BuildCallback);
             }
         }
     }

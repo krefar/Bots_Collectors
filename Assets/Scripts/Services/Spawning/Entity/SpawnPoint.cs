@@ -1,13 +1,17 @@
+using System;
 using UnityEngine;
 
-public class SpawnPoint
+public class SpawnPoint : MonoBehaviour, IEquatable<SpawnPoint>
 {
-    public Transform Transform { get; set; }
     public bool Free { get; set; }
 
-    public SpawnPoint(Transform transform)
+    public SpawnPoint()
     {
-        Transform = transform;
         Free = true;
+    }
+
+    public bool Equals(SpawnPoint other)
+    {
+        return this.GetInstanceID() == other.GetInstanceID();
     }
 }
